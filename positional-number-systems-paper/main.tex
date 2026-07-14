@@ -1,0 +1,456 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+
+\title{From Two-Digit Multiplication to Convolution\\
+\large Positional Numbers as Polynomials in Their Base}
+\author{Albert Stockton}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The familiar algorithm for multiplying multidigit numbers can be understood as a form of polynomial multiplication. Beginning with the multiplication of two two-digit decimal numbers, this article develops a general formula for multiplication in any positional number system. A numeral in base $B$ is interpreted as a polynomial evaluated at $B$, while multiplication produces a discrete convolution of the digit sequences. The usual process of carrying is then shown to be a normalization procedure that converts unrestricted polynomial coefficients into valid base-$B$ digits. This perspective connects elementary place-value arithmetic with algebra, number systems, signal processing, and modern algorithms for multiplying large integers.
+\end{abstract}
+
+\section{Introduction}
+
+Consider two two-digit decimal numbers whose digits are $a,b,c,$ and $d$:
+\[
+\overline{ab}=10a+b,
+\qquad
+\overline{cd}=10c+d.
+\]
+Their product is
+\[
+(10a+b)(10c+d).
+\]
+Applying the distributive property gives
+\[
+100ac+10ad+10bc+bd,
+\]
+or equivalently,
+\[
+\boxed{100ac+10(ad+bc)+bd}.
+\]
+
+This formula may initially look like a shortcut for multiplying two-digit numbers. However, it reveals a deeper structure. The powers $100$, $10$, and $1$ are
+\[
+10^2,\qquad 10^1,\qquad 10^0.
+\]
+The digits act like polynomial coefficients, while the number $10$ acts like the value assigned to a variable. Once this observation is generalized, ordinary multiplication becomes polynomial multiplication followed by carrying.
+
+The identity itself is established mathematics rather than a new theorem. The aim here is expository: to show how a simple observation about decimal digits naturally leads to positional notation, convolution, and fast multiplication algorithms.
+
+\section{Two-Digit Multiplication}
+
+Let
+\[
+X=10a+b
+\]
+and
+\[
+Y=10c+d,
+\]
+where $a$ and $c$ are the tens digits and $b$ and $d$ are the ones digits. Then
+\begin{align*}
+XY
+&=(10a+b)(10c+d)\\
+&=100ac+10ad+10bc+bd\\
+&=100ac+10(ad+bc)+bd.
+\end{align*}
+
+For example, take
+\[
+23\times45.
+\]
+Here,
+\[
+a=2,\quad b=3,\quad c=4,\quad d=5.
+\]
+Therefore,
+\begin{align*}
+23\times45
+&=100(2)(4)+10\bigl((2)(5)+(3)(4)\bigr)+(3)(5)\\
+&=800+10(10+12)+15\\
+&=800+220+15\\
+&=1035.
+\end{align*}
+
+The three groups correspond to powers of ten:
+\[
+ac\,10^2+(ad+bc)10^1+bd\,10^0.
+\]
+The coefficient of $10^1$ contains two terms because there are two ways to obtain a total exponent of one:
+\[
+10^1\cdot10^0
+\qquad\text{and}\qquad
+10^0\cdot10^1.
+\]
+This is the first appearance of the convolution pattern.
+
+\section{Positional Representation}
+
+In base $B$, a numeral with digits
+\[
+a_na_{n-1}\cdots a_1a_0
+\]
+represents the number
+\[
+\boxed{A=\sum_{i=0}^{n}a_iB^i}.
+\]
+The digit $a_i$ occupies position $i$, measured from right to left beginning with position zero.
+
+For example, in base ten,
+\[
+527=5(10^2)+2(10^1)+7(10^0).
+\]
+In base two,
+\[
+1011_2=1(2^3)+0(2^2)+1(2^1)+1(2^0)=11_{10}.
+\]
+In base sixteen,
+\[
+2A_{16}=2(16^1)+10(16^0)=42_{10}.
+\]
+
+For an ordinary nonnegative integer base $B\ge 2$, the allowed digits are
+\[
+0,1,\ldots,B-1.
+\]
+Restricting the coefficients to this range gives every nonnegative integer a unique finite base-$B$ representation, apart from unnecessary leading zeros.
+
+The expression
+\[
+a_nB^n+\cdots+a_1B+a_0
+\]
+has the form of a polynomial evaluated at $B$. For example, if
+\[
+p(x)=5x^2+2x+7,
+\]
+then
+\[
+527=p(10).
+\]
+Thus a positional numeral can be treated as a polynomial whose coefficients are digits and whose variable is evaluated at the chosen base.
+
+\section{The General Multiplication Formula}
+
+Suppose two nonnegative integers are represented in base $B$ as
+\[
+A=\sum_{i=0}^{m}a_iB^i
+\]
+and
+\[
+C=\sum_{j=0}^{n}c_jB^j.
+\]
+Multiplying the sums gives
+\[
+AC=
+\left(\sum_{i=0}^{m}a_iB^i\right)
+\left(\sum_{j=0}^{n}c_jB^j\right).
+\]
+Using the distributive property,
+\[
+AC=\sum_{i=0}^{m}\sum_{j=0}^{n}a_ic_jB^{i+j}.
+\]
+Terms with the same total exponent can be grouped together. Define
+\[
+s_k=\sum_{i+j=k}a_ic_j.
+\]
+Then
+\[
+\boxed{AC=\sum_{k=0}^{m+n}s_kB^k},
+\]
+where
+\[
+\boxed{s_k=\sum_{i+j=k}a_ic_j}.
+\]
+Equivalently,
+\[
+\boxed{
+\left(\sum_i a_iB^i\right)
+\left(\sum_j c_jB^j\right)
+=
+\sum_k\left(\sum_{i+j=k}a_ic_j\right)B^k
+}.
+\]
+
+The coefficient $s_k$ is obtained by multiplying every pair of digits whose positions add to $k$. This explains the diagonal pattern seen in traditional long multiplication.
+
+\section{Multiplication as Convolution}
+
+If the digit sequences are written from least significant to most significant,
+\[
+(a_0,a_1,\ldots,a_m)
+\]
+and
+\[
+(c_0,c_1,\ldots,c_n),
+\]
+then the sequence
+\[
+s_k=\sum_{i+j=k}a_ic_j
+\]
+is their discrete convolution.
+
+For two two-digit numbers, the least-significant-first digit sequences are
+\[
+(b,a)
+\qquad\text{and}\qquad
+(d,c).
+\]
+Their convolution is
+\[
+(bd,\ ad+bc,\ ac),
+\]
+which gives
+\[
+bd+(ad+bc)B+acB^2.
+\]
+Thus long multiplication has two conceptually separate stages:
+\begin{enumerate}[label=\arabic*.]
+\item Convolve the digit sequences.
+\item Carry to convert the resulting coefficients into valid digits.
+\end{enumerate}
+
+This same convolution structure appears in polynomial multiplication, digital signal processing, probability, and several fast multiplication algorithms.
+
+\section{Carrying as Base-$B$ Normalization}
+
+The convolution coefficients are not necessarily valid base-$B$ digits. For example, the raw coefficients for
+\[
+23\times45
+\]
+are
+\[
+(15,22,8),
+\]
+ordered from the $10^0$ position upward. However, decimal digits must lie between $0$ and $9$.
+
+The expression before carrying is
+\[
+15(10^0)+22(10^1)+8(10^2).
+\]
+Normalize it from right to left:
+\[
+15=5+1(10).
+\]
+Write $5$ in the ones position and carry $1$ into the tens position. The tens coefficient becomes
+\[
+22+1=23.
+\]
+Then
+\[
+23=3+2(10).
+\]
+Write $3$ in the tens position and carry $2$ into the hundreds position. The hundreds coefficient becomes
+\[
+8+2=10.
+\]
+Finally,
+\[
+10=0+1(10),
+\]
+which produces the digits
+\[
+1,0,3,5.
+\]
+Therefore,
+\[
+23\times45=1035.
+\]
+
+More generally, suppose the raw coefficient in position $k$, including the incoming carry, is $t_k$. By the division algorithm, there are unique integers $q_{k+1}$ and $d_k$ such that
+\[
+t_k=Bq_{k+1}+d_k,
+\qquad
+0\le d_k<B.
+\]
+Equivalently,
+\[
+d_k=t_k\bmod B
+\]
+and
+\[
+q_{k+1}=\left\lfloor\frac{t_k}{B}\right\rfloor.
+\]
+The remainder $d_k$ becomes the digit in position $k$, and the quotient $q_{k+1}$ is carried into position $k+1$.
+
+Therefore,
+\[
+\boxed{
+\text{positional multiplication}
+=
+\text{convolution}
++
+\text{base-}B\text{ normalization}
+}.
+\]
+
+\section{Example in Binary}
+
+Consider
+\[
+1011_2\times110_2.
+\]
+The corresponding polynomials are
+\[
+x^3+x+1
+\]
+and
+\[
+x^2+x.
+\]
+Their product is
+\begin{align*}
+(x^3+x+1)(x^2+x)
+&=x^5+x^4+x^3+2x^2+x.
+\end{align*}
+Evaluating at $x=2$ gives the correct numerical value, but the coefficient $2$ is not a valid binary digit. Carrying in base two transforms the raw coefficients into
+\[
+1000010_2.
+\]
+Indeed,
+\[
+1011_2=11_{10},
+\qquad
+110_2=6_{10},
+\]
+and
+\[
+11\cdot6=66=1000010_2.
+\]
+The multiplication rule is unchanged when moving from decimal to binary. Only the base, the allowed digits, and the carrying threshold change.
+
+\section{Arbitrary Bases}
+
+For any integer base $B\ge 2$, two two-digit numerals satisfy
+\[
+(aB+b)(cB+d)=acB^2+(ad+bc)B+bd.
+\]
+Setting $B=10$ gives decimal multiplication:
+\[
+100ac+10(ad+bc)+bd.
+\]
+Setting $B=2$ gives the corresponding expression in binary:
+\[
+4ac+2(ad+bc)+bd.
+\]
+Setting $B=16$ gives
+\[
+256ac+16(ad+bc)+bd.
+\]
+
+The algebraic structure is independent of the base. What changes is the value assigned to each position, the permitted digit set, and the point at which carrying occurs.
+
+\section{Connection to Faster Multiplication}
+
+The ordinary school algorithm forms every digit-by-digit product. If each number has approximately $n$ digits, this takes on the order of $n^2$ single-digit multiplications.
+
+Once numbers are recognized as polynomials evaluated at a base, faster polynomial-multiplication ideas can also be applied to integers. Karatsuba multiplication begins by splitting two numbers into high and low parts:
+\[
+X=x_1B^m+x_0,
+\qquad
+Y=y_1B^m+y_0.
+\]
+Their direct product is
+\[
+XY=x_1y_1B^{2m}+(x_1y_0+x_0y_1)B^m+x_0y_0.
+\]
+The middle term can be computed using
+\[
+x_1y_0+x_0y_1
+=(x_1+x_0)(y_1+y_0)-x_1y_1-x_0y_0.
+\]
+This replaces four recursive multiplications with three. For sufficiently large integers, the savings become substantial.
+
+Even faster approaches use evaluation, interpolation, and Fourier-transform methods to compute polynomial convolutions efficiently. The conceptual path is
+\[
+\text{digit multiplication}
+\longrightarrow
+\text{polynomial multiplication}
+\longrightarrow
+\text{convolution}
+\longrightarrow
+\text{fast integer multiplication}.
+\]
+
+\section{Educational Significance}
+
+The polynomial interpretation creates a bridge between arithmetic and algebra. For example,
+\[
+(2x+3)(4x+5)=8x^2+22x+15.
+\]
+Evaluating at $x=10$ gives
+\[
+8(100)+22(10)+15=1035,
+\]
+which is the same as
+\[
+23\times45.
+\]
+The only additional step required in positional notation is carrying.
+
+This viewpoint helps explain:
+\begin{itemize}
+\item why place values are powers of the base,
+\item why partial products shift position,
+\item why cross-products combine,
+\item why carrying works,
+\item why the same arithmetic applies in other bases,
+\item why polynomial multiplication resembles long multiplication, and
+\item why convolution appears in integer arithmetic.
+\end{itemize}
+
+\section{Conclusion}
+
+Beginning with
+\[
+(10a+b)(10c+d)=100ac+10(ad+bc)+bd,
+\]
+we uncover the general structure of positional multiplication. A base-$B$ number is represented by
+\[
+\sum_i a_iB^i.
+\]
+Multiplying two such numbers gives
+\[
+\sum_k\left(\sum_{i+j=k}a_ic_j\right)B^k.
+\]
+The inner sum is a discrete convolution of the digit sequences. Because the convolution coefficients may be greater than or equal to the base, carrying is required to convert them into valid digits.
+
+The resulting principle is
+\[
+\boxed{
+\text{place-value arithmetic is polynomial arithmetic evaluated at the base, followed by carrying}
+}.
+\]
+
+What begins as a formula for multiplying two-digit decimal numbers therefore leads naturally to arbitrary bases, polynomial algebra, convolution, and modern multiplication algorithms.
+
+\begin{thebibliography}{9}
+
+\bibitem{bernstein}
+D. J. Bernstein,
+\emph{Multidigit Multiplication for Mathematicians}, 2001.
+Available at \url{https://cr.yp.to/papers/m3.pdf}.
+
+\bibitem{howe-epp}
+R. Howe and S. Epp,
+\emph{Taking Place Value Seriously: Arithmetic, Estimation, and Algebra}.
+Available at \url{https://static.ias.edu/pcmi/2005/documents/rhplacevalue05-1.pdf}.
+
+\bibitem{knuth}
+D. E. Knuth,
+\emph{The Art of Computer Programming, Volume 2: Seminumerical Algorithms},
+3rd ed., Addison-Wesley, 1997.
+
+\end{thebibliography}
+
+\end{document}
